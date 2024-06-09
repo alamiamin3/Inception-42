@@ -6,7 +6,7 @@ RUN apt-get update && apt-get install -y nginx && apt install openssl -y
 
 
 COPY tools/default.conf /etc/nginx/conf.d/
-COPY tools/index.php /var/www/html/
+# COPY tools/index.php /var/www/html/
 
 
 
