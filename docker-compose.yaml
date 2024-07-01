@@ -21,6 +21,8 @@ services:
       - "9000:9000"
     volumes:
       - ./test:/var/www/html/
+    env_file:
+      - .env
   maria-db:
     container_name: maria-db
     build: ./maria-db/.
