@@ -37,6 +37,8 @@ services:
       - .env
     ports:
       - "3306:3306"
+    volumes:
+      - mariadb:/var/lib/mysql
     networks:
       - inception
 
@@ -51,3 +53,10 @@ volumes:
       type: none
       o: bind
       device: /home/aalami/data/wordpress
+  mariadb:
+    name: mariadb
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/aalami/data/mariadb
