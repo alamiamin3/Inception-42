@@ -8,9 +8,12 @@ services:
     ports:
       - "443:443"
     volumes:
-      - ./test:/var/www/html/
+      - /Users/aalami/goinfre/data:/var/www/html/
     depends_on:
       - wordpress
+    networks:
+      - inception
+
   wordpress:
     depends_on:
       - maria-db
@@ -20,9 +23,12 @@ services:
     ports:
       - "9000:9000"
     volumes:
-      - ./test:/var/www/html/
+      - /Users/aalami/goinfre/data:/var/www/html/
     env_file:
       - .env
+    networks:
+      - inception
+
   maria-db:
     container_name: maria-db
     build: ./maria-db/.
@@ -31,3 +37,10 @@ services:
       - .env
     ports:
       - "3306:3306"
+    networks:
+      - inception
+
+networks:
+  inception:
+    driver: bridge
+    name: inception_network

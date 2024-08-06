@@ -15,7 +15,6 @@
 # mysqld_safe
 
 service mariadb start
-
 mariadb -e "CREATE DATABASE IF NOT EXISTS $MARIADB_DATABASE;"
 # Create user if not exists
 mariadb -e "CREATE USER IF NOT EXISTS '$MARIADB_USER'@'%' IDENTIFIED BY '$MARIADB_USER_PASSWORD';"
@@ -28,7 +27,10 @@ mariadb -e "FLUSH PRIVILEGES;"
 
 #--------------mariadb restart--------------#
 # Shutdown mariadb to restart with new config
-mysqladmin -u root -p$MARIADB_ROOT_PASSWORD shutdown
+chmod 775 /run/mysqld/
+# mysqladmin -u root -p$MARIADB_ROOT_PASSWORD shutdown
+mariadb-admin -u root -p$MARIADB_ROOT_PASSWORD shutdown
+
 
 # Restart mariadb with new config in the background to keep the container running
 mysqld_safe --port=3306 --bind-address=0.0.0.0 --datadir='/var/lib/mysql'
