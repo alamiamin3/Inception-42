@@ -62,7 +62,7 @@ This approach results in containers being more "lightweight" than virtual machin
 
 # The Idea behind containers
 
-Containers are an abstraction over several linux technologies, and the main ones are c-groups, namespaces and union filesystem.
+Containers are an abstraction over several linux technologies, and the main ones are c-groups and namespaces.
 
 **C-groups** : or control groups is a mechanism used by linux to track and organize processes regardless of wether these processes are containers or not, c-groups are typically used to associate processes with resources and limit or prioritize resources utilization, and those resources include:
 
