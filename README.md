@@ -460,13 +460,8 @@ FROM debian:bullseye
 RUN apt-get update && \
     apt-get install -y mariadb-server 
 
-# Copy the custom MariaDB server configuration file to the container
-# - `./conf/50-server.cnf` is the local configuration file for MariaDB
-# - `/etc/mysql/mariadb.conf.d/50-server.cnf` is the target location in the container where the configuration file will be placed
-COPY ./conf/50-server.cnf /etc/mysql/mariadb.conf.d/50-server.cnf
-
 # Copy the contents of the local 'tools' directory to the '/tools' directory in the container
-# This directory may contain scripts or other files needed for setting up or configuring MariaDB
+# This directory contain a script  needed for setting up or configuring MariaDB
 COPY ./tools /tools
 
 # Set the working directory to '/tools'
@@ -490,40 +485,46 @@ and for the script that i used in order to launch the mariadb server and create 
 ```bash
 #!/bin/bash
 
-# Start the MariaDB service
-# This command initializes and starts the MariaDB server process
+# Move the custom MariaDB configuration file to the appropriate directory
+mv /conf/50-server.cnf /etc/mysql/mariadb.conf.d/50-server.cnf
+
+# Start the MariaDB service using the system service manager
+# This initiates the MariaDB server based on the default configurations
 service mariadb start
 
-# Pause the script for 5 seconds
-# This gives MariaDB some time to start up fully before running subsequent commands
+# Wait for 5 seconds to ensure the MariaDB service has enough time to start fully
 sleep 5
 
-# Create a new database if it doesn't already exist
-# - `mariadb -e`: Executes the given SQL command
-# - `CREATE DATABASE IF NOT EXISTS $MYSQL_DATABASE;`: Creates a database named $MYSQL_DATABASE if it does not already exist
+# Create a new database if it does not already exist
+# The variable $MYSQL_DATABASE should contain the name of the database
 mariadb -e "CREATE DATABASE IF NOT EXISTS $MYSQL_DATABASE;"
 
-# Create a new user if it doesn't already exist
-# - `CREATE USER IF NOT EXISTS '$MYSQL_USER'@'%' IDENTIFIED BY '$MYSQL_PASSWORD';`: Creates a user with the specified username and password
+# Create a new user if it does not already exist
+# The user will be created with the username specified in $MYSQL_USER
+# and password specified in $MYSQL_PASSWORD
 mariadb -e "CREATE USER IF NOT EXISTS '$MYSQL_USER'@'%' IDENTIFIED BY '$MYSQL_PASSWORD';"
 
-# Grant all privileges on the new database to the newly created user
-# - `GRANT ALL PRIVILEGES ON $MYSQL_DATABASE.* TO '$MYSQL_USER'@'%';`: Grants all permissions on the specified database to the user
+# Grant all privileges on the specified database to the created user
+# This allows the user to fully manage the database
 mariadb -e "GRANT ALL PRIVILEGES ON $MYSQL_DATABASE.* TO '$MYSQL_USER'@'%';"
 
-# Reload the grant tables to ensure that the new privileges take effect
-# - `FLUSH PRIVILEGES;`: Reloads the privilege tables in MariaDB
-mariadb -e "FLUSH PRIVILEGES;"
+# Change the root user's password
+# The new password for the root user is specified in $MYSQL_ROOT_PASSWORD
+mariadb -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '$MYSQL_ROOT_PASSWORD';"
 
-# Shutdown the MariaDB server
-# - `mysqladmin -u root -p$MYSQL_ROOT_PASSWORD shutdown`: Uses `mysqladmin` to shut down the MariaDB server process as the root user with the provided root password
+# Apply all privilege changes made so far
+# This ensures that the changes are immediately available
+mariadb -e "FLUSH PRIVILEGES;" -p$MYSQL_ROOT_PASSWORD
+
+# Shut down the MariaDB server gracefully
+# This is necessary to apply the new configuration settings
+# The shutdown command uses the root password specified in $MYSQL_ROOT_PASSWORD
 mysqladmin -u root -p$MYSQL_ROOT_PASSWORD shutdown
 
-# Start MariaDB in safe mode with specified options
-# - `mysqld_safe`: Starts MariaDB server in safe mode, which helps in case of problems during startup
-# - `--port=3306`: Specifies the port for the MariaDB server to listen on (default is 3306)
-# - `--bind-address=0.0.0.0`: Binds the server to all available network interfaces, allowing connections from any IP address
-# - `--datadir='/var/lib/mysql'`: Specifies the data directory where MariaDB stores its data files
+# Start the MariaDB server again with specific options
+# --port=3306 specifies the port number
+# --bind-address=0.0.0.0 allows the server to accept connections from any network interface
+# --datadir='/var/lib/mysql' specifies the directory where database files are stored
 mysqld_safe --port=3306 --bind-address=0.0.0.0 --datadir='/var/lib/mysql'
 
 ```
